@@ -52,12 +52,22 @@ class MainViewController: UIViewController {
     guard let image = imagePreview.image else {
         return
     }
-    PhotoWriter.save(image)
-        .asSingle()
+    // 方法一
+//    PhotoWriter.save(image)
+//        .asSingle()
+//        .subscribe(onSuccess: { [weak self] (id) in
+//            self?.showMessage("Save with id: \(id)")
+//        }) { (error) in
+//            self.showMessage("Error", description: error.localizedDescription)
+//        }
+//        .disposed(by: bag)
+    
+    // 方法二
+    PhotoWriter.saveSingle(image)
         .subscribe(onSuccess: { [weak self] (id) in
-            self?.showMessage("Save with id: \(id)")
-        }) { (error) in
-            self.showMessage("Error", description: error.localizedDescription)
+        self?.showMessage("Save with id: \(id)")
+    }) { (error) in
+        self.showMessage("Error", description: error.localizedDescription)
         }
         .disposed(by: bag)
   }
