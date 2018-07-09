@@ -25,14 +25,26 @@ import RxSwift
 import RxCocoa
 import Kingfisher
 
+func cachedFileURL(_ fileName: String) -> URL {
+    return FileManager.default
+        .urls(for: .cachesDirectory, in: .allDomainsMask)
+        .first!
+        .appendingPathComponent(fileName)
+}
+
 class ActivityController: UITableViewController {
 
-  private let repo = "ReactiveX/RxSwift"
+    private let repo = "ReactiveX/RxSwift"
 
-  private let events = Variable<[Event]>([])
-  private let bag = DisposeBag()
+    private let events = Variable<[Event]>([])
+    private let bag = DisposeBag()
 
-  override func viewDidLoad() {
+    private let eventsFileURL = cachedFileURL("events.plist")
+    private let mofifiedFileURL = cachedFileURL("modified.txt")
+    
+    private let lastModified = Variable<NSString?>(nil)
+    
+    override func viewDidLoad() {
     super.viewDidLoad()
     title = repo
 
@@ -44,6 +56,9 @@ class ActivityController: UITableViewController {
     refreshControl.attributedTitle = NSAttributedString(string: "Pull to refresh")
     refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
 
+        let eventsArray = (NSArray(contentsOf: eventsFileURL) as? [[String: Any]]) ?? []
+        events.value = eventsArray.compactMap(Event.init)
+        lastModified.value = try? NSString(contentsOf: mofifiedFileURL, usedEncoding: nil)
     refresh()
   }
 
@@ -59,8 +74,12 @@ class ActivityController: UITableViewController {
         .map { (urlString) -> URL in
             return URL(string: "https://api.github.com/repos/\(urlString)/events")!
         }
-        .map { (url) -> URLRequest in
-            return URLRequest(url: url)
+        .map { [weak self] (url) -> URLRequest in
+            var request = URLRequest(url: url)
+            if let mofifiedHeader = self?.lastModified.value {
+                request.addValue(mofifiedHeader as String, forHTTPHeaderField: "Last-Modified")
+            }
+            return request
         }
         .flatMap { (request) -> Observable<(response: HTTPURLResponse, data: Data)> in
             return URLSession.shared.rx.response(request: request)
@@ -80,14 +99,32 @@ class ActivityController: UITableViewController {
             return objects.count > 0
         }
         .map { objects in
-            return objects.map(Event.init)
+            return objects.compactMap(Event.init)
         }
         .subscribe(onNext: { [weak self] newEvents in
             self?.processEvents(newEvents)
         })
         .disposed(by: bag)
     
+    
+    response.filter { (response, _) -> Bool in
+        return 200..<400 ~= response.statusCode
+        }
+        .flatMap { (response, _) -> Observable<NSString> in
+            guard let value = response.allHeaderFields["Last-Modified"] as? NSString else {
+                return Observable.empty()
+            }
+            return Observable.just(value)
+        }
+        .subscribe(onNext: { [weak self] (modifiedHeader) in
+            guard let strongSelf = self else { return }
+            strongSelf.lastModified.value = modifiedHeader
+            try? modifiedHeader.write(to: strongSelf.mofifiedFileURL, atomically: true, encoding: String.Encoding.utf8.rawValue)
+        })
+        .disposed(by: bag)
   }
+    
+
 
     func processEvents(_ newEvents: [Event]) {
         var updatedEvents = newEvents + events.value
@@ -97,7 +134,12 @@ class ActivityController: UITableViewController {
         events.value = updatedEvents
         DispatchQueue.main.async {
             self.tableView.reloadData()
+            self.refreshControl?.endRefreshing()
         }
+        
+        let eventsArray = updatedEvents.map{ $0.dictionary } as NSArray
+        eventsArray.write(to: eventsFileURL, atomically: true)
+        
     }
     
   // MARK: - Table Data Source
