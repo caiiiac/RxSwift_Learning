@@ -129,7 +129,6 @@
 				3D46E6211E258DFC0090C97B /* Frameworks */,
 				3D46E6221E258DFC0090C97B /* Resources */,
 				2C41D32C2056DA8B52FB04CB /* [CP] Embed Pods Frameworks */,
-				E49A9527D702C781B7A0FDF3 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -206,21 +205,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-OurPlanet/Pods-OurPlanet-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E49A9527D702C781B7A0FDF3 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-OurPlanet/Pods-OurPlanet-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		FFC7A62736617F7D2B2513CC /* [CP] Check Pods Manifest.lock */ = {
