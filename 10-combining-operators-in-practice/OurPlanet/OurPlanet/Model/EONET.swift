@@ -91,23 +91,23 @@ class EONET {
         }
     }
     
-    fileprivate static func events(forLast days: Int, closed: Bool) -> Observable<[EOEvent]> {
+    fileprivate static func events(forLast days: Int, closed: Bool, endpoint: String) -> Observable<[EOEvent]> {
         return request(endpoint: eventsEndpoint, query: [
             "days": NSNumber(value: days),
             "status": (closed ? "closed" : "open")
             ])
             .map { json in
                 guard let raw = json["events"] as? [[String: Any]] else {
-                    throw EOError.invalidJSON(eventsEndpoint)
+                    throw EOError.invalidJSON(endpoint)
                 }
                 return raw.compactMap(EOEvent.init)
         }
         .catchErrorJustReturn([])
     }
     
-    static func events(forLast days: Int = 360) -> Observable<[EOEvent]> {
-        let openEvents = events(forLast: days, closed: false)
-        let closeEvents = events(forLast: days, closed: true)
+    static func events(forLast days: Int = 360, category: EOCategory) -> Observable<[EOEvent]> {
+        let openEvents = events(forLast: days, closed: false, endpoint: category.endpoint)
+        let closeEvents = events(forLast: days, closed: true, endpoint: category.endpoint)
         
         return Observable.of(openEvents, closeEvents)
                 .merge()
