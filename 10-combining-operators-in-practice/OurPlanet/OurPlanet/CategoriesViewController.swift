@@ -37,7 +37,7 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
 
     categories
         .asObservable()
-        .subscribe(onNext: { [weak self] (cat) in
+        .subscribe(onNext: { [weak self] (_) in
             DispatchQueue.main.async {
                 self?.tableView.reloadData()
             }
@@ -57,7 +57,7 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
         .merge(maxConcurrent: 2)
         
         let updatedCategories = eoCategories.flatMap { (categories) -> Observable<[EOCategory]> in
-            downloadedEvents.scan(categories, accumulator: { (updated, events) -> [EOCategory] in
+            downloadedEvents.scan(categories) { (updated, events) -> [EOCategory] in
                 return updated.map({ (category) -> EOCategory in
                     let eventsForCategory = EONET.filteredEvents(events: events, forCategory: category)
                     if !eventsForCategory.isEmpty {
@@ -67,7 +67,7 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
                     }
                     return category
                 })
-            })
+            }
         }
         
         eoCategories
