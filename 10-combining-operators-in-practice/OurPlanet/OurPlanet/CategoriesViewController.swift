@@ -56,9 +56,9 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
         }
         .merge(maxConcurrent: 2)
         
-        let updatedCategories = eoCategories.flatMap { (categories) -> Observable<[EOCategory]> in
-            downloadedEvents.scan(categories) { (updated, events) -> [EOCategory] in
-                return updated.map({ (category) -> EOCategory in
+        let updatedCategories = eoCategories.flatMap { categories in
+            downloadedEvents.scan(categories) { updated, events in
+                return updated.map{ category in
                     let eventsForCategory = EONET.filteredEvents(events: events, forCategory: category)
                     if !eventsForCategory.isEmpty {
                         var cat = category
@@ -66,7 +66,7 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
                         return cat
                     }
                     return category
-                })
+                }
             }
         }
         
