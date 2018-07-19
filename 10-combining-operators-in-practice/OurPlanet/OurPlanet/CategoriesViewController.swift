@@ -50,9 +50,9 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
     func startDownload() {
         let eoCategories = EONET.categories
         let downloadedEvents = eoCategories.flatMap { categories in
-            return Observable.from(categories.map({ (category) -> Observable<[EOEvent]> in
+            return Observable.from(categories.map { category in
                 EONET.events(forLast: 360, category: category)
-            }))
+            })
         }
         .merge(maxConcurrent: 2)
         
