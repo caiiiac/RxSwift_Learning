@@ -4,6 +4,34 @@ import RxSwift
 import RxCocoa
 
 
+let elementsPerSecond = 3
+let windowTimeSpan: RxTimeInterval = 4
+let windowMaxCount = 10
+let sourceObservable = PublishSubject<String>()
+
+let sourceTimeline = TimelineView<String>.make()
+let stack = UIStackView.makeVertical([
+    UILabel.makeTitle("window"),
+    UILabel.make("Emitted elements (\(elementsPerSecond) per sec):"),
+    sourceTimeline,
+    UILabel.make("Windowed observables (at most \(windowMaxCount) every \(windowTimeSpan) sec):")
+    ])
+
+let timer = DispatchSource.timer(interval: 1.0 / Double(elementsPerSecond), queue: .main) {
+    sourceObservable.onNext("😽")
+}
+
+_ = sourceObservable.subscribe(sourceTimeline)
+
+_ = sourceObservable.window(timeSpan: windowTimeSpan, count: windowMaxCount, scheduler: MainScheduler.instance)
+    .flatMap { windowedObservable -> Observable<(TimelineView<Int>, String?)> in
+        let timeline = TimelineView<Int>.make()
+        stack.insert
+        
+        
+}
+
+
 
 
 // Support code -- DO NOT REMOVE
