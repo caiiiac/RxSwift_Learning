@@ -4,6 +4,26 @@ import RxSwift
 import RxCocoa
 
 
+let button = UIButton(type: .system)
+button.setTitle("Press me now!", for: .normal)
+button.sizeToFit()
+
+let tapsTimeline = TimelineView<String>.make()
+
+let stack = UIStackView.makeVertical([
+    button,
+    UILabel.make("Taps on button above"),
+    tapsTimeline])
+
+let _ = button
+    .rx.tap
+    .map { _ in "•" }
+    .timeout(5, other: Observable.just("X"), scheduler: MainScheduler.instance)
+    .subscribe(tapsTimeline)
+
+let hostView = setupHostView()
+hostView.addSubview(stack)
+hostView
 
 
 
