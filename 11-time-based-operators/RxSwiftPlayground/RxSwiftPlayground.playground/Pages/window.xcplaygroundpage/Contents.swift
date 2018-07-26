@@ -26,10 +26,24 @@ _ = sourceObservable.subscribe(sourceTimeline)
 _ = sourceObservable.window(timeSpan: windowTimeSpan, count: windowMaxCount, scheduler: MainScheduler.instance)
     .flatMap { windowedObservable -> Observable<(TimelineView<Int>, String?)> in
         let timeline = TimelineView<Int>.make()
-        stack.insert
-        
-        
-}
+        stack.insert(timeline, at: 4)
+        stack.keep(atMost: 8)
+        return windowedObservable
+            .map { value in (timeline, value) }
+            .concat(Observable.just((timeline, nil)))
+        }
+        .subscribe(onNext: { tuple in
+            let (timeline, value) = tuple
+            if let value = value {
+                timeline.add(.Next(value))
+            } else {
+                timeline.add(.Completed(true))
+            }
+        })
+
+let hostView = setupHostView()
+hostView.addSubview(stack)
+hostView
 
 
 
