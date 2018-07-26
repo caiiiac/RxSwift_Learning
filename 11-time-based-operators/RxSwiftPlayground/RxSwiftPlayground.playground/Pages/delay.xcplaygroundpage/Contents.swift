@@ -30,6 +30,11 @@ _ = sourceObservable.subscribe(sourceTimeline)
 // Setup the delayed subscription
 // ADD CODE HERE
 
+let sourceObservable = Observable<Int>
+    .interval(RxTimeInterval(1.0 / Double(elementsPerSecond)), scheduler: MainScheduler.instance)
+    .replay(elementsPerSecond)
+
+
 _ = Observable<Int>
     .timer(3, scheduler: MainScheduler.instance)
     .flatMap { _ in
