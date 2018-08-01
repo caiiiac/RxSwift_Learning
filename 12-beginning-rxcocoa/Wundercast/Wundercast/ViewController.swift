@@ -43,7 +43,21 @@ class ViewController: UIViewController {
     ApiController.shared.currentWeather(city: "RxSwift")
         .observeOn(MainScheduler.instance)
         .subscribe(onNext: { (data) in
-            self.tempLabel.text = "\(data.temperature) ° C"
+            self.tempLabel.text = "\(data.temperature)°C"
+            self.iconLabel.text = data.icon
+            self.humidityLabel.text = "\(data.humidity)%"
+            self.cityNameLabel.text = data.cityName
+        })
+        .disposed(by: bag)
+    
+    searchCityName.rx.text
+        .filter { ($0 ?? "").count > 0}
+        .flatMap { (text) -> Observable<ApiController.Weather> in
+            return ApiController.shared.currentWeather(city: text ?? "Error").catchErrorJustReturn(ApiController.Weather.empty)
+        }
+        .observeOn(MainScheduler.instance)
+        .subscribe(onNext: { (data) in
+            self.tempLabel.text = "\(data.temperature)°C"
             self.iconLabel.text = data.icon
             self.humidityLabel.text = "\(data.humidity)%"
             self.cityNameLabel.text = data.cityName
