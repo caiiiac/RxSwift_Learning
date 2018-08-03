@@ -31,6 +31,8 @@ class ViewController: UIViewController {
   @IBOutlet weak var humidityLabel: UILabel!
   @IBOutlet weak var iconLabel: UILabel!
   @IBOutlet weak var cityNameLabel: UILabel!
+    @IBOutlet weak var tempSwitch: UISwitch!
+    
 
     let bag = DisposeBag()
     
@@ -40,17 +42,17 @@ class ViewController: UIViewController {
 
     style()
 
-    ApiController.shared.currentWeather(city: "RxSwift")
-        .observeOn(MainScheduler.instance)
-        .subscribe(onNext: { (data) in
-            self.tempLabel.text = "\(data.temperature)°C"
-            self.iconLabel.text = data.icon
-            self.humidityLabel.text = "\(data.humidity)%"
-            self.cityNameLabel.text = data.cityName
-        })
-        .disposed(by: bag)
+//    ApiController.shared.currentWeather(city: "RxSwift")
+//        .observeOn(MainScheduler.instance)
+//        .subscribe(onNext: { (data) in
+//            self.tempLabel.text = "\(data.temperature)°C"
+//            self.iconLabel.text = data.icon
+//            self.humidityLabel.text = "\(data.humidity)%"
+//            self.cityNameLabel.text = data.cityName
+//        })
+//        .disposed(by: bag)
     
-    /// TODO: 方法一
+    // MARK: - 方法一
 //    searchCityName.rx.text
 //        .filter { ($0 ?? "").count > 0}
 //        .flatMapLatest { (text) -> Observable<ApiController.Weather> in
@@ -66,7 +68,7 @@ class ViewController: UIViewController {
 //        })
 //        .disposed(by: bag)
     
-    /// TODO: 方法二
+    // MARK: - 方法二
 //    let search = searchCityName.rx.text
 //        .filter { ($0 ?? "").count > 0}
 //        .flatMapLatest { (text) -> Observable<ApiController.Weather> in
@@ -92,7 +94,7 @@ class ViewController: UIViewController {
 //        .bind(to: cityNameLabel.rx.text)
 //        .disposed(by: bag)
     
-    /// TODO: 方法三
+    // MARK: - 方法三
 //    let search = searchCityName.rx.text
 //        .filter { ($0 ?? "").count > 0}
 //        .flatMapLatest { (text) -> Observable<ApiController.Weather> in
@@ -117,26 +119,62 @@ class ViewController: UIViewController {
 //        .drive(cityNameLabel.rx.text)
 //        .disposed(by: bag)
     
-    /// TODO: 方法四
-    let search = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+    // MARK: - 方法四
+//    let search = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+//        .map { self.searchCityName.text }
+//        .flatMap { (text) -> Observable<ApiController.Weather> in
+//            return ApiController.shared.currentWeather(city: text ?? "Error")
+//        }
+//        .asDriver(onErrorJustReturn: ApiController.Weather.empty)
+//
+//    search.map { "\($0.temperature)°C" }
+//        .drive(tempLabel.rx.text)
+//        .disposed(by: bag)
+//
+//    search.map { $0.icon }
+//        .drive(iconLabel.rx.text)
+//        .disposed(by: bag)
+//
+//    search.map { "\($0.humidity)%" }
+//        .drive(humidityLabel.rx.text)
+//        .disposed(by: bag)
+//
+//    search.map { $0.cityName }
+//        .drive(cityNameLabel.rx.text)
+//        .disposed(by: bag)
+    
+    // MARK: - 方法五
+    
+    let textSearch = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+    let temperature = tempSwitch.rx.controlEvent(.valueChanged).asObservable()
+    
+    let search = Observable.from([textSearch, temperature])
+        .merge()
         .map { self.searchCityName.text }
+        .filter { ($0 ?? "").count > 0 }
         .flatMap { (text) -> Observable<ApiController.Weather> in
-            return ApiController.shared.currentWeather(city: text ?? "Error")
+            return ApiController.shared.currentWeather(city: text ?? "Error").catchErrorJustReturn(ApiController.Weather.empty)
         }
         .asDriver(onErrorJustReturn: ApiController.Weather.empty)
-
-    search.map { "\($0.temperature)°C" }
-        .drive(tempLabel.rx.text)
-        .disposed(by: bag)
-
+    
+    search.map { (w) -> String in
+        if self.tempSwitch.isOn {
+            return "\(Int(Double(w.temperature) * 1.8 + 32))°F"
+        } else {
+            return "\(w.temperature)°C"
+        }
+    }
+    .drive(tempLabel.rx.text)
+    .disposed(by: bag)
+    
     search.map { $0.icon }
         .drive(iconLabel.rx.text)
         .disposed(by: bag)
-
+    
     search.map { "\($0.humidity)%" }
         .drive(humidityLabel.rx.text)
         .disposed(by: bag)
-
+    
     search.map { $0.cityName }
         .drive(cityNameLabel.rx.text)
         .disposed(by: bag)
