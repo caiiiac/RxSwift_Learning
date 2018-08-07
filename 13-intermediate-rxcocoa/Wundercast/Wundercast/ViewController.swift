@@ -45,10 +45,12 @@ class ViewController: UIViewController {
 
     style()
 
-    let search = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
-      .map { self.searchCityName.text }
-      .filter { ($0 ?? "").count > 0 }
-      .flatMap { text in
+    
+    let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+        .map { self.searchCityName.text }
+        .filter { ($0 ?? "").count > 0 }
+    
+    let search = searchInput.flatMap { text in
         return ApiController.shared.currentWeather(city: text ?? "Error")
           .catchErrorJustReturn(ApiController.Weather.dummy)
       }
@@ -70,6 +72,31 @@ class ViewController: UIViewController {
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
 
+    let runnign = Observable.from([
+        searchInput.map { _ in true },
+        search.map { _ in false }.asObservable()
+        ])
+        .merge()
+        .startWith(true)
+        .asDriver(onErrorJustReturn: false)
+    
+    runnign
+        .skip(1)
+        .drive(activityIndicator.rx.isAnimating)
+        .disposed(by: bag)
+    runnign
+        .drive(tempLabel.rx.isHidden)
+        .disposed(by: bag)
+    runnign
+        .drive(iconLabel.rx.isHidden)
+        .disposed(by: bag)
+    runnign
+        .drive(humidityLabel.rx.isHidden)
+        .disposed(by: bag)
+    runnign
+        .drive(cityNameLabel.rx.isHidden)
+        .disposed(by: bag)
+    
   }
 
   override func viewDidAppear(_ animated: Bool) {
