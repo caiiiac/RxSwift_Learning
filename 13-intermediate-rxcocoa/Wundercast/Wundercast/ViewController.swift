@@ -58,24 +58,7 @@ class ViewController: UIViewController {
 //          .catchErrorJustReturn(ApiController.Weather.dummy)
 //      }
 //      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
-//
-//    search.map { "\($0.temperature)° C" }
-//      .drive(tempLabel.rx.text)
-//      .disposed(by: bag)
-//
-//    search.map { $0.icon }
-//      .drive(iconLabel.rx.text)
-//      .disposed(by: bag)
-//
-//    search.map { "\($0.humidity)%" }
-//      .drive(humidityLabel.rx.text)
-//      .disposed(by: bag)
-//
-//    search.map { $0.cityName }
-//      .drive(cityNameLabel.rx.text)
-//      .disposed(by: bag)
 
-    
     
     // MARK: - 定位事件
     let currentLocation = locationManager.rx.didUpdateLocations
@@ -106,42 +89,69 @@ class ViewController: UIViewController {
             .catchErrorJustReturn(ApiController.Weather.dummy)
     }
     
+    // MARK: - MAP
+    mapButton.rx.tap
+        .subscribe(onNext: {
+            self.mapView.isHidden = !self.mapView.isHidden
+        })
+        .disposed(by: bag)
+    
+    mapView.rx.setDelegate(self)
+        .disposed(by: bag)
+    
+    
+    let mapInput = mapView.rx.regionDidChangeAnimated
+        .skip(1)
+        .map { _ in self.mapView.centerCoordinate }
+    
+    let mapSearch = mapInput.flatMap { coordinate in
+        return ApiController.shared.currentWeather(lat: coordinate.latitude, lon: coordinate.longitude)
+            .catchErrorJustReturn(ApiController.Weather.dummy)
+    }
+    
+    // MARK: - 搜索
     let search = Observable.from([
-            geoSearch, textSearch
+        geoSearch, textSearch, mapSearch
         ])
         .merge()
         .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
     
     search.map { "\($0.temperature)° C" }
-      .drive(tempLabel.rx.text)
-      .disposed(by: bag)
-
+        .drive(tempLabel.rx.text)
+        .disposed(by: bag)
+    
     search.map { $0.icon }
-      .drive(iconLabel.rx.text)
-      .disposed(by: bag)
-
+        .drive(iconLabel.rx.text)
+        .disposed(by: bag)
+    
     search.map { "\($0.humidity)%" }
-      .drive(humidityLabel.rx.text)
-      .disposed(by: bag)
-
+        .drive(humidityLabel.rx.text)
+        .disposed(by: bag)
+    
     search.map { $0.cityName }
-      .drive(cityNameLabel.rx.text)
-      .disposed(by: bag)
+        .drive(cityNameLabel.rx.text)
+        .disposed(by: bag)
+    
+    search.map { [$0.overlay()] }
+        .drive(mapView.rx.overlays)
+        .disposed(by: bag)
     
     // MARK: - 加载中
     let runnign = Observable.from([
-            searchInput.map { _ in true },
-            geoInput.map { _ in true },
-            search.map { _ in false }.asObservable()
+        searchInput.map { _ in true },
+        geoInput.map { _ in true },
+        mapInput.map { _ in true },
+        search.map { _ in false }.asObservable()
         ])
         .merge()
-        .startWith(true)
+        .startWith(false)
         .asDriver(onErrorJustReturn: false)
     
     runnign
         .skip(1)
         .drive(activityIndicator.rx.isAnimating)
         .disposed(by: bag)
+    
     runnign
         .drive(tempLabel.rx.isHidden)
         .disposed(by: bag)
@@ -187,3 +197,13 @@ class ViewController: UIViewController {
   }
 }
 
+
+extension ViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let overlay = overlay as? ApiController.Weather.Overlay {
+            let overlayView = ApiController.Weather.OverlayView(overlay: overlay, overlayIcon: overlay.icon)
+            return overlayView
+        }
+        return MKOverlayRenderer()
+    }
+}
