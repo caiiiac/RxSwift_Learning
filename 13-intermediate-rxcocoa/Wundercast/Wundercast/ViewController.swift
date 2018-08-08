@@ -136,6 +136,16 @@ class ViewController: UIViewController {
         .drive(mapView.rx.overlays)
         .disposed(by: bag)
     
+    let mapLocation = Observable.from([
+            geoSearch, textSearch
+        ])
+        .merge()
+        .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+    
+    mapLocation.map { $0.coordinate }
+        .drive(mapView.rx.location)
+        .disposed(by: bag)
+    
     // MARK: - 加载中
     let runnign = Observable.from([
         searchInput.map { _ in true },
