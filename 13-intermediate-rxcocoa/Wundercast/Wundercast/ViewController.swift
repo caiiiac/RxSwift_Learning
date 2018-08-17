@@ -136,6 +136,7 @@ class ViewController: UIViewController {
         .drive(mapView.rx.overlays)
         .disposed(by: bag)
     
+    // MARK: 地图位置区域
     let mapLocation = Observable.from([
             geoSearch, textSearch
         ])
@@ -145,6 +146,17 @@ class ViewController: UIViewController {
     mapLocation.map { $0.coordinate }
         .drive(mapView.rx.location)
         .disposed(by: bag)
+    
+    // MARK: 周围天气
+    mapInput.flatMap { coordinate in
+        return ApiController.shared.currentWeatherAround(lat: coordinate.latitude, lon: coordinate.longitude)
+                .catchErrorJustReturn([])
+    }
+    .asDriver(onErrorJustReturn: [])
+    .map { $0.map { $0.overlay() } }
+    .drive(mapView.rx.overlays)
+    .disposed(by: bag)
+    
     
     // MARK: - 加载中
     let runnign = Observable.from([

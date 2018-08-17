@@ -34,7 +34,7 @@ class ApiController {
 
   /// The api key to communicate with openweathermap.org
   /// Create you own on https://home.openweathermap.org/users/sign_up
-  private let apiKey = "[YOUR KEY]"
+  private let apiKey = "e6b1227a57fea0ea6418834157dd5e81"
 
   /// API base URL
   let baseURL = URL(string: "http://api.openweathermap.org/data/2.5")!
@@ -72,6 +72,18 @@ class ApiController {
       )
     }
   }
+    
+    public func currentWeatherAround(lat: Double, lon: Double) -> Observable<[Weather]> {
+        var weathers = [Observable<Weather>]()
+        for i in -1...1 {
+            for j in -1...1 {
+                weathers.append(currentWeather(lat: lat + Double(i), lon: lon + Double(j)))
+            }
+        }
+        return Observable.from(weathers)
+                .merge()
+                .toArray()
+    }
 
   //MARK: - Private Methods
 

@@ -61,6 +61,13 @@ extension Reactive where Base: MKMapView {
         }
     }
     
+    var centerCoordinate: Binder<CLLocationCoordinate2D> {
+        return Binder(self.base) { mapView, centerCoordinate in
+            mapView.centerCoordinate = centerCoordinate
+        }
+    }
+    
+    
     public var regionDidChangeAnimated: ControlEvent<Bool> {
         let source = delegate
             .methodInvoked(#selector(MKMapViewDelegate.mapView(_:regionDidChangeAnimated:)))
@@ -70,4 +77,10 @@ extension Reactive where Base: MKMapView {
         return ControlEvent(events: source)
     }
     
+    public var location: Binder<CLLocationCoordinate2D> {
+        return Binder(self.base) { mapView, location in
+            let span = MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 4)
+            mapView.region = MKCoordinateRegion(center: location, span: span)
+        }
+    }
 }
