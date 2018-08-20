@@ -116,7 +116,7 @@ class ApiController {
 
     let session = URLSession.shared
     return request.flatMap() { request in
-      return session.rx.data(request: request).map { JSON(data: $0) }
+      return session.rx.data(request: request).map { try JSON(data: $0) }
     }
   }
 

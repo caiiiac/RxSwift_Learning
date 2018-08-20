@@ -76,7 +76,7 @@ class ViewController: UIViewController {
 
     let geoSearch = geoLocation.flatMap() { location in
       return ApiController.shared.currentWeather(lat: location.coordinate.latitude, lon: location.coordinate.longitude)
-        .catchErrorJustReturn(ApiController.Weather.empty)
+//        .catchErrorJustReturn(ApiController.Weather.empty)
     }
 
     let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
@@ -85,7 +85,7 @@ class ViewController: UIViewController {
 
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
-        .catchErrorJustReturn(ApiController.Weather.empty)
+//        .catchErrorJustReturn(ApiController.Weather.empty)
     }
 
     let search = Observable.from([geoSearch, textSearch])
