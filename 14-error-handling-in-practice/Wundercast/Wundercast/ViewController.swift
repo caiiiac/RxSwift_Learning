@@ -39,6 +39,8 @@ class ViewController: UIViewController {
   @IBOutlet weak var iconLabel: UILabel!
   @IBOutlet weak var cityNameLabel: UILabel!
 
+    var cache = [String: Weather]()
+    
   let bag = DisposeBag()
 
   let locationManager = CLLocationManager()
@@ -85,7 +87,18 @@ class ViewController: UIViewController {
 
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
-//        .catchErrorJustReturn(ApiController.Weather.empty)
+        .do(onNext: { (data) in
+            if let text = text {
+                self.cache[text] = data
+            }
+        })
+        .catchError({ (error) -> Observable<ApiController.Weather> in
+            if let text = text, let cachedData = self.cache[text] {
+                return Observable.just(cachedData)
+            } else {
+                return Observable.just(ApiController.Weather.empty)
+            }
+        })
     }
 
     let search = Observable.from([geoSearch, textSearch])
