@@ -93,6 +93,11 @@ class ViewController: UIViewController {
             if let text = text {
                 self.cache[text] = data
             }
+        }, onError: { [weak self] e in
+            guard let strongSelf = self else { return }
+            DispatchQueue.main.async {
+                strongSelf.showError(error: e)
+            }
         })
 //        .retry(3)
         .retryWhen { e in
@@ -197,4 +202,19 @@ class ViewController: UIViewController {
     iconLabel.textColor = UIColor.cream
     cityNameLabel.textColor = UIColor.cream
   }
+}
+
+extension ViewController {
+    func showError(error e: Error) {
+        if let e = e as? ApiController.ApiError {
+            switch e {
+            case .cityNotFound:
+                InfoView.showIn(viewController: self, message: "City name is invalid")
+            case .serverFailure:
+                InfoView.showIn(viewController: self, message: "Server error")
+            }
+        } else {
+            InfoView.showIn(viewController: self, message: "An error occurred")
+        }
+    }
 }
