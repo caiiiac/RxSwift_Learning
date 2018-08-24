@@ -28,6 +28,8 @@ import CoreLocation
 
 typealias Weather = ApiController.Weather
 
+var cachedData = [String: Weather]()
+
 class ViewController: UIViewController {
 
   @IBOutlet weak var keyButton: UIButton!
@@ -54,6 +56,9 @@ class ViewController: UIViewController {
 
     let maxAttempts = 4
     style()
+    if RxReachability.shared.startMonitor("baidu.com") == false {
+        debugPrint("Reachability failed!")
+    }
 
     keyButton.rx.tap.subscribe(onNext: {
       self.requestKey()
@@ -88,8 +93,9 @@ class ViewController: UIViewController {
             if attempt >= maxAttempts - 1 {
                 return Observable.error(error)
             } else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
-                return ApiController.shared.apiKey.filter { $0 != ""}
-                    .map { _ in return 1}
+                return ApiController.shared.apiKey.filter { $0 != ""}.map { _ in return 1 }
+            } else if (error as NSError).code == -1009 {
+                return RxReachability.shared.status.filter { $0 == .online }.map { _ in return 1 }
             }
             debugPrint("== retrying after \(attempt + 1) seconds ==")
             return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance).take(1)
@@ -102,17 +108,18 @@ class ViewController: UIViewController {
 
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
-        .do(onNext: { (data) in
-            if let text = text {
-                self.cache[text] = data
-            }
-        }, onError: { [weak self] e in
-            guard let strongSelf = self else { return }
-            DispatchQueue.main.async {
-                strongSelf.showError(error: e)
-            }
-        })
+//        .do(onNext: { (data) in
+//            if let text = text {
+//                self.cache[text] = data
+//            }
+//        }, onError: { [weak self] e in
+//            guard let strongSelf = self else { return }
+//            DispatchQueue.main.async {
+//                strongSelf.showError(error: e)
+//            }
+//        })
 //        .retry(3)
+        .cache(key: text ?? "", displayErrorIn: self)
         .retryWhen(retryHandler)
         .catchError({ (error) -> Observable<ApiController.Weather> in
             if let text = text, let cachedData = self.cache[text] {
@@ -208,9 +215,7 @@ class ViewController: UIViewController {
     iconLabel.textColor = UIColor.cream
     cityNameLabel.textColor = UIColor.cream
   }
-}
-
-extension ViewController {
+    
     func showError(error e: Error) {
         if let e = e as? ApiController.ApiError {
             switch e {
@@ -224,5 +229,28 @@ extension ViewController {
         } else {
             InfoView.showIn(viewController: self, message: "An error occurred")
         }
+    }
+}
+
+//MARK: - Solution
+
+extension ObservableType where E == Weather {
+    func cache(key: String, displayErrorIn viewController: UIViewController) -> Observable<E> {
+        return self.observeOn(MainScheduler.instance).do(onNext: {
+            cachedData[key] = $0
+        }, onError: { e in
+            if let e = e as? ApiController.ApiError {
+                switch e {
+                case .cityNotFound:
+                    InfoView.showIn(viewController: viewController, message: "City name is invalid")
+                case .serverFailure:
+                    InfoView.showIn(viewController: viewController, message: "Server error")
+                case .invalidKey:
+                    InfoView.showIn(viewController: viewController, message: "Key is invalid")
+                }
+            } else {
+                InfoView.showIn(viewController: viewController, message: "An error occurred")
+            }
+        })
     }
 }
