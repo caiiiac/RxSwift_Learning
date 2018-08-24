@@ -41,6 +41,7 @@ class ViewController: UIViewController {
 
     var cache = [String: Weather]()
     
+    
   let bag = DisposeBag()
 
   let locationManager = CLLocationManager()
@@ -51,6 +52,7 @@ class ViewController: UIViewController {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
 
+    let maxAttempts = 4
     style()
 
     keyButton.rx.tap.subscribe(onNext: {
@@ -92,7 +94,15 @@ class ViewController: UIViewController {
                 self.cache[text] = data
             }
         })
-        .retry(3)
+//        .retry(3)
+        .retryWhen { e in
+            e.enumerated().flatMap { (attempt, error) -> Observable<Int> in
+                if attempt >= maxAttempts - 1 {
+                    return Observable.error(error)
+                }
+                return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance).take(1)
+            }
+        }
         .catchError({ (error) -> Observable<ApiController.Weather> in
             if let text = text, let cachedData = self.cache[text] {
                 return Observable.just(cachedData)
