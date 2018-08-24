@@ -83,6 +83,19 @@ class ViewController: UIViewController {
 //        .catchErrorJustReturn(ApiController.Weather.empty)
     }
 
+    let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
+        return e.enumerated().flatMap { (attempt, error) -> Observable<Int> in
+            if attempt >= maxAttempts - 1 {
+                return Observable.error(error)
+            } else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
+                return ApiController.shared.apiKey.filter { $0 != ""}
+                    .map { _ in return 1}
+            }
+            debugPrint("== retrying after \(attempt + 1) seconds ==")
+            return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance).take(1)
+        }
+    }
+    
     let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
       .map { self.searchCityName.text }
       .filter { ($0 ?? "").count > 0 }
@@ -100,14 +113,7 @@ class ViewController: UIViewController {
             }
         })
 //        .retry(3)
-        .retryWhen { e in
-            e.enumerated().flatMap { (attempt, error) -> Observable<Int> in
-                if attempt >= maxAttempts - 1 {
-                    return Observable.error(error)
-                }
-                return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance).take(1)
-            }
-        }
+        .retryWhen(retryHandler)
         .catchError({ (error) -> Observable<ApiController.Weather> in
             if let text = text, let cachedData = self.cache[text] {
                 return Observable.just(cachedData)
@@ -184,7 +190,7 @@ class ViewController: UIViewController {
     alert.addTextField(configurationHandler: configurationTextField)
 
     alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler:{ (UIAlertAction) in
-      ApiController.shared.apiKey.onNext(self.keyTextField?.text ?? "")
+      ApiController.shared.apiKey.onNext("e6b1227a57fea0ea6418834157dd5e81") //(self.keyTextField?.text ?? "")
     }))
 
     alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.destructive))
@@ -212,6 +218,8 @@ extension ViewController {
                 InfoView.showIn(viewController: self, message: "City name is invalid")
             case .serverFailure:
                 InfoView.showIn(viewController: self, message: "Server error")
+            case .invalidKey:
+                InfoView.showIn(viewController: self, message: "Key is invalid")
             }
         } else {
             InfoView.showIn(viewController: self, message: "An error occurred")
