@@ -31,9 +31,10 @@ let animal = BehaviorSubject(value: "[dog]")
 
 
 animal
-  .dump()
-  .dumpingSubscription()
-  .disposed(by: bag)
+    .dump()
+    .observeOn(globalScheduler)
+    .dumpingSubscription()
+    .disposed(by: bag)
 
 
 let fruit = Observable<String>.create { observer in
@@ -52,6 +53,19 @@ fruit
     .dumpingSubscription()
     .disposed(by: bag)
 
+
+let animalsThread = Thread() {
+    sleep(3)
+    animal.onNext("[cat]")
+    sleep(3)
+    animal.onNext("[tiger]")
+    sleep(3)
+    animal.onNext("[fox]")
+    sleep(3)
+    animal.onNext("[lepoard]")
+}
+
+animalsThread.name = "Animals Thread"
+animalsThread.start()
+
 RunLoop.main.run(until: Date(timeIntervalSinceNow: 13))
-
-
