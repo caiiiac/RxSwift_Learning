@@ -96,4 +96,12 @@ class TestingOperators : XCTestCase {
         
         XCTAssertEqual(results, [1, 2, 2, 1])
     }
+    
+    func testToArray() {
+        let scheduler = ConcurrentDispatchQueueScheduler(qos: .default)
+        
+        let toArrayObservable = Observable.of(1, 2).subscribeOn(scheduler)
+        
+        XCTAssertEqual(try! toArrayObservable.toBlocking().toArray(), [1, 2])
+    }
 }
