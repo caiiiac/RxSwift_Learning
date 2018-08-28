@@ -104,4 +104,21 @@ class TestingOperators : XCTestCase {
         
         XCTAssertEqual(try! toArrayObservable.toBlocking().toArray(), [1, 2])
     }
+    
+    func testToArrayMaterialized() {
+        let scheduler = ConcurrentDispatchQueueScheduler(qos: .default)
+        
+        let toArrayObservable = Observable.of(1, 2).subscribeOn(scheduler)
+        
+        let result = toArrayObservable.toBlocking().materialize()
+        
+        switch result {
+        case .completed(elements: let elements):
+            XCTAssertEqual(elements, [1,2])
+        case .failed(elements: _, error: let error):
+            XCTFail(error.localizedDescription)
+        }
+        
+        
+    }
 }
