@@ -35,7 +35,8 @@ class ViewController : UIViewController {
   @IBOutlet weak var zeroButton: UIButton!
   @IBOutlet var buttons: [UIButton]!
   
-  let disposeBag = DisposeBag()
+    @IBOutlet var hert: [UIButton]!
+    let disposeBag = DisposeBag()
   let viewModel = ViewModel()
   
   let backgroundColor = PublishSubject<UIColor>()

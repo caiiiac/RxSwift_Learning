@@ -34,5 +34,61 @@ class TestingViewModel : XCTestCase {
   override func setUp() {
     super.setUp()
 
+    viewModel = ViewModel()
+    scheduler = ConcurrentDispatchQueueScheduler(qos: .default)
   }
+    
+    func testColorIsRedWhenHexStringIsFF0000_async() {
+        let disposeBag = DisposeBag()
+        let expect = expectation(description: #function)
+        let expectedColor = UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        
+        var result: UIColor!
+        
+        viewModel.color.asObservable()
+            .skip(1)
+            .subscribe(onNext: {
+                result = $0
+                expect.fulfill()
+            })
+            .disposed(by: disposeBag)
+        
+        viewModel.hexString.value = "#FF0000"
+        
+        waitForExpectations(timeout: 1.0) { (error) in
+            guard error == nil else {
+                XCTFail(error!.localizedDescription)
+                return
+            }
+            XCTAssertEqual(expectedColor, result)
+        }
+    }
+    
+    func testColorIsRedWhenHexStringIsFF0000() {
+        let colorObservable = viewModel.color.asObservable().subscribeOn(scheduler)
+        viewModel.hexString.value = "#ff0000"
+        
+        do {
+            guard let result = try colorObservable.toBlocking(timeout: 1.0).first() else { return }
+            XCTAssertEqual(result, .red)
+        } catch {
+            debugPrint(error)
+        }
+    }
+    
+    func testRgbIs010WhenHexStringIs00FF00() {
+        let rgbObservable = viewModel.rgb.asObservable().subscribeOn(scheduler)
+        viewModel.hexString.value = "#00ff00"
+        let result = try! rgbObservable.toBlocking().first()!
+        
+        XCTAssertEqual(0 * 255, result.0)
+        XCTAssertEqual(1 * 255, result.1)
+        XCTAssertEqual(0 * 255, result.2)
+    }
+    
+    func testColorNameIsRayWenderlichGreenWhenHexStringIs006636() {
+        let colorNameObservable = viewModel.colorName.asObservable().subscribeOn(scheduler)
+        viewModel.hexString.value = "#006636"
+        XCTAssertEqual("rayWenderlichGreen", try! colorNameObservable.toBlocking().first()!)
+    }
 }
