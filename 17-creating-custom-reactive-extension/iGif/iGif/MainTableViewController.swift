@@ -27,7 +27,7 @@ class MainTableViewController: UITableViewController {
     definesPresentationContext = true
     tableView.tableHeaderView = searchController.searchBar
     
-    search.filter { $0.characters.count >= 3 }
+    search.filter { $0.count >= 3 }
       .throttle(0.3, scheduler: MainScheduler.instance)
       .distinctUntilChanged()
       .flatMapLatest { query -> Observable<[JSON]> in

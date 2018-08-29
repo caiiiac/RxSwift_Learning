@@ -44,6 +44,8 @@ class ApiController {
     
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     
-    return Observable.just([])
+    return URLSession.shared.rx.json(request: request).map({ (json) -> [JSON] in
+        return json["data"].array ?? []
+    })
   }
 }
