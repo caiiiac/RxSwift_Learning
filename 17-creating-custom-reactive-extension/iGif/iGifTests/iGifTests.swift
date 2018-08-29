@@ -53,7 +53,37 @@ class iGifTests: XCTestCase {
     OHHTTPStubs.removeAllStubs()
   }
   
-  
+    func testData() {
+        let observable = URLSession.shared.rx.data(request: request)
+        expect(observable.toBlocking().firstOrNil()).toNot(beNil())
+    }
+    
+    func testString() {
+        let observable = URLSession.shared.rx.string(request: request)
+        let string = "{\"array\":[\"foo\",\"bar\"],\"foo\":\"bar\"}"
+        expect(observable.toBlocking().firstOrNil()) == string
+    }
+    
+    func testJSON() {
+        let observable = URLSession.shared.rx.json(request: request)
+        let string = "{\"array\":[\"foo\",\"bar\"],\"foo\":\"bar\"}"
+        let json = try? JSON(data: string.data(using: .utf8)!)
+        expect(observable.toBlocking().firstOrNil()) == json
+    }
+    
+    func testError() {
+        var erroredCorrectly = false
+        let observable = URLSession.shared.rx.json(request: errorRequest)
+        do {
+            let _ = try observable.toBlocking().first()
+            assertionFailure()
+        } catch (RxURLSessionError.unknown) {
+            erroredCorrectly = true
+        } catch {
+            assertionFailure()
+        }
+        expect(erroredCorrectly) == true
+    }
 }
 
 extension BlockingObservable {
