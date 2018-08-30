@@ -72,19 +72,31 @@ extension Reactive where Base: URLSession {
     
     func string(request: URLRequest) -> Observable<String> {
         return data(request: request).map({ (data) -> String in
-            return String(data: data, encoding: .utf8) ?? ""
+            if let string =  String(data: data, encoding: .utf8) {
+                return string
+            } else {
+                throw RxURLSessionError.deserializationFailed
+            }
         })
     }
     
     func json(request: URLRequest) -> Observable<JSON> {
         return data(request: request).map({ (data) -> JSON in
-            return try JSON(data: data)
+            let json = try JSON(data: data)
+            if json.object is NSNull {
+                throw RxURLSessionError.deserializationFailed
+            }
+            return json
         })
     }
     
     func image(request: URLRequest) -> Observable<UIImage> {
         return data(request: request).map({ (data) -> UIImage in
-            return UIImage(data: data) ?? UIImage()
+            if let image = UIImage(data: data) {
+                return image
+            } else {
+                throw RxURLSessionError.deserializationFailed
+            }
         })
     }
 }
