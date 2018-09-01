@@ -24,6 +24,7 @@ import UIKit
 import RxSwift
 import Then
 import Alamofire
+import RxRealmDataSources
 
 class ListTimelineViewController: UIViewController {
 
@@ -46,14 +47,30 @@ class ListTimelineViewController: UIViewController {
     tableView.estimatedRowHeight = 90
     tableView.rowHeight = UITableViewAutomaticDimension
 
+    title = "@\(viewModel.list.username)/\(viewModel.list.slug)"
+    navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: nil, action: nil)
     bindUI()
   }
 
   func bindUI() {
     //bind button to the people view controller
 
+    navigationItem.rightBarButtonItem!.rx.tap
+        .throttle(0.5, scheduler: MainScheduler.instance)
+        .subscribe(onNext: { [weak self] (_) in
+            guard let this = self else { return }
+            this.navigator.show(segue: .listPeople(this.viewModel.account, this.viewModel.list), sender: this)
+        })
+        .disposed(by: bag)
     //show tweets in table view
 
+    let dataSource = RxTableViewRealmDataSource<Tweet>(cellIdentifier: "TweetCellView", cellType: TweetCellView.self) { (cell, _, tweet) in
+        cell.update(with: tweet)
+    }
+    
     //show message when no account available
+    viewModel.tweets
+        .bind(to: tableView.rx.realmChanges(dataSource))
+        .disposed(by: bag)
   }
 }

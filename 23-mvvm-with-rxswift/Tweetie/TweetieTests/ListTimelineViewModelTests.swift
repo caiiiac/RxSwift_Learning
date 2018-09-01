@@ -50,4 +50,22 @@ class ListTimelineViewModelTests: XCTestCase {
     let emitted = try! result!.toBlocking(timeout: 1).first()!
     XCTAssertTrue(emitted.0.count == 3)
   }
+    
+    func test_whenAccountAvailable_updatesAccountStatus() {
+        let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
+        let viewModel = createViewModel(accountSubject.asDriver(onErrorJustReturn: .unavailable))
+        
+        let loggedIn = viewModel.loggedIn.asObservable()
+        DispatchQueue.main.async {
+            accountSubject.onNext(.authorized(AccessToken()))
+            accountSubject.onNext(.unavailable)
+            accountSubject.onCompleted()
+        }
+        
+        let emitted = try! loggedIn.take(3).toBlocking(timeout: 1).toArray()
+        XCTAssertEqual(emitted[0], true)
+        XCTAssertEqual(emitted[1], false)
+//        XCTAssertTrue(emitted[2])
+        
+    }
 }
