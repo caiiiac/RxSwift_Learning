@@ -67,10 +67,13 @@ class ListTimelineViewController: UIViewController {
     let dataSource = RxTableViewRealmDataSource<Tweet>(cellIdentifier: "TweetCellView", cellType: TweetCellView.self) { (cell, _, tweet) in
         cell.update(with: tweet)
     }
-    
-    //show message when no account available
     viewModel.tweets
         .bind(to: tableView.rx.realmChanges(dataSource))
+        .disposed(by: bag)
+    
+    //show message when no account available
+    viewModel.loggedIn
+        .drive(messageView.rx.isHidden)
         .disposed(by: bag)
   }
 }

@@ -53,9 +53,20 @@ class PersonTimelineViewController: UIViewController {
 
   func bindUI() {
     //bind the title
+    let titleWhenLoaded = "@\(viewModel.username)"
+    viewModel.tweets
+    .map { tweets in
+        return tweets.count == 0 ? "None found" : titleWhenLoaded
+    }
+    .drive(rx.title)
+    .disposed(by: bag)
 
     //bind the tweets to the table view
-    
+    let dataSource = createTweetsDataSource()
+    viewModel.tweets
+        .map { return [TweetSection(model: "Tweets", items: $0)] }
+        .drive(tableView.rx.items(dataSource: dataSource))
+        .disposed(by: bag)
   }
 
   private func createTweetsDataSource() -> RxTableViewSectionedAnimatedDataSource<TweetSection> {
