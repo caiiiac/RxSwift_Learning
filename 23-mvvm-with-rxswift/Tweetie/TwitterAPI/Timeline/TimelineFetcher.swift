@@ -89,10 +89,19 @@ class TimelineFetcher {
 
     // Re-fetch the timeline
 
-    timeline = Observable<[Tweet]>.empty()
+    timeline = reachableTimerWithAccount.withLatestFrom(feedCursor.asObservable(), resultSelector: { account, cursor in
+        return (account: account, cursor: cursor)
+    })
+        .flatMapLatest(jsonProvider)
+        .map(Tweet.unboxMany) //{ Tweet.unboxMany(tweets: $0) }
+        .share(replay: 1, scope: .whileConnected)
 
     // Store the latest position through timeline
-
+    
+    timeline
+        .scan(.none, accumulator: TimelineFetcher.currentCursor)
+        .bind(to: feedCursor)
+        .disposed(by: bag)
   }
 
   static func currentCursor(lastCursor: TimelineCursor, tweets: [Tweet]) -> TimelineCursor {

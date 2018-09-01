@@ -34,8 +34,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   let testing = NSClassFromString("XCTest") != nil
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-    TwitterAccount.set(key: "placeholder",
-                       secret: "placeholder")
+    TwitterAccount.set(key: "MswALZylAzQ0rFfcDdqMYI6oR",
+                       secret: "O9fSBrUbymIfWYy3Z4IB4kWbK9vajNIlLRbR7lDGZBDV0FfYlM")
 
     if !testing {
       let feedNavigation = window!.rootViewController! as! UINavigationController

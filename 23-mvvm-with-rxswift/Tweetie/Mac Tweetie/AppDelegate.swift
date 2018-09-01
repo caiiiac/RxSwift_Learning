@@ -33,8 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       fatalError("Can't find content controller")
     }
 
-    TwitterAccount.set(key: "placeholder",
-                       secret: "placeholder")
+    TwitterAccount.set(key: "MswALZylAzQ0rFfcDdqMYI6oR",
+                       secret: "O9fSBrUbymIfWYy3Z4IB4kWbK9vajNIlLRbR7lDGZBDV0FfYlM")
 
     let account = TwitterAccount().default
     let list = (username: "icanzilb", slug: "RxSwift")
