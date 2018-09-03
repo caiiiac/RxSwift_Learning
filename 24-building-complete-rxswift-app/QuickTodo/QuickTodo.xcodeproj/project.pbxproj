@@ -190,7 +190,6 @@
 				3D932AFC1E4D245600E4BC3D /* Frameworks */,
 				3D932AFD1E4D245600E4BC3D /* Resources */,
 				9A488C372BE9258DE3C0A5FE /* [CP] Embed Pods Frameworks */,
-				8C5F900CF219BA30B0C77489 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -250,21 +249,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		8C5F900CF219BA30B0C77489 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-QuickTodo/Pods-QuickTodo-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		9A488C372BE9258DE3C0A5FE /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
