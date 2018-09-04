@@ -33,6 +33,8 @@ class TasksViewController: UIViewController, BindableType {
   @IBOutlet var newTaskButton: UIBarButtonItem!
   
   var viewModel: TasksViewModel!
+    var dataSource: RxTableViewSectionedAnimatedDataSource<TaskSection>!
+    
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -40,10 +42,25 @@ class TasksViewController: UIViewController, BindableType {
     tableView.rowHeight = UITableViewAutomaticDimension
     tableView.estimatedRowHeight = 60
     
+    configureDataSource()
   }
   
   func bindViewModel() {
-    
+    viewModel.sectionedItems
+        .bind(to: tableView.rx.items(dataSource: dataSource))
+        .disposed(by: self.rx.disposeBag)
   }
   
+    fileprivate func configureDataSource() {
+        dataSource = RxTableViewSectionedAnimatedDataSource<TaskSection>(configureCell: { [weak self] (dataSource, tableView, indexPath, item) -> UITableViewCell in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "TaskItemCell", for: indexPath) as! TaskItemTableViewCell
+            if let strongSelf = self {
+                cell.configure(with: item, action: strongSelf.viewModel.onToggle(task: item))
+            }
+            return cell
+            
+            }, titleForHeaderInSection: { dataSource, index in
+                    dataSource.sectionModels[index].model
+        })
+    }
 }

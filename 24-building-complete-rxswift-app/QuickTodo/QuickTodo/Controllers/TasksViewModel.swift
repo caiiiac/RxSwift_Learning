@@ -25,10 +25,29 @@ import RxSwift
 import RxDataSources
 import Action
 
+typealias TaskSection = AnimatableSectionModel<String, TaskItem>
+
 struct TasksViewModel {
   let sceneCoordinator: SceneCoordinatorType
   let taskService: TaskServiceType
 
+    var sectionedItems: Observable<[TaskSection]> {
+        return self.taskService.tasks()
+            .map { results in
+                let dueTasks = results
+                    .filter("checked == nil")
+                    .sorted(byKeyPath: "added", ascending: false)
+                
+                let doneTasks = results
+                    .filter("checked != nil")
+                    .sorted(byKeyPath: "checked", ascending: false)
+                return [
+                    TaskSection(model: "Due Tasks", items: dueTasks.toArray()),
+                    TaskSection(model: "Done Tasks", items: doneTasks.toArray())
+                ]
+            }
+    }
+    
   init(taskService: TaskServiceType, coordinator: SceneCoordinatorType) {
     self.taskService = taskService
     self.sceneCoordinator = coordinator
