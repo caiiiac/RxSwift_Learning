@@ -23,3 +23,7 @@
 import Foundation
 
 
+enum Scene {
+    case tasks(TasksViewModel)
+    case editTasks(EditTaskViewModel)
+}
