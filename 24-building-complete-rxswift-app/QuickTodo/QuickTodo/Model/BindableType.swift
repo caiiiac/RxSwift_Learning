@@ -23,3 +23,19 @@
 import UIKit
 import RxSwift
 
+protocol BindableType {
+    associatedtype viewModelType
+    
+    var viewModel: viewModelType! { get set }
+    
+    func bindViewModel()
+}
+
+
+extension BindableType where Self: UIViewController {
+    mutating func bindViewModel(to model: Self.viewModelType) {
+        viewModel = model
+        loadViewIfNeeded()
+        bindViewModel()
+    }
+}

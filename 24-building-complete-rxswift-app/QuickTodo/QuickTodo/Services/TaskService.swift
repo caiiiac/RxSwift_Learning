@@ -25,7 +25,7 @@ import RealmSwift
 import RxSwift
 import RxRealm
 
-struct TaskService {
+struct TaskService: TaskServiceType {
 
   init() {
     // create a few default tasks
