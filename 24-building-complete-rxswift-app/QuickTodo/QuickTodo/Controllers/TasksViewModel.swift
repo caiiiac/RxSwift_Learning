@@ -48,6 +48,17 @@ struct TasksViewModel {
             }
     }
     
+    lazy var editAction: Action<TaskItem, Swift.Never> = { this in
+        return Action { task in
+            let editViewModel = EditTaskViewModel(task: task,
+                                                  coordinator: this.sceneCoordinator,
+                                                  updateAction: this.onUpdateTitle(task: task))
+            return this.sceneCoordinator
+                .transition(to: Scene.editTasks(editViewModel), type: .modal)
+                .asObservable()
+        }
+    }(self)
+    
   init(taskService: TaskServiceType, coordinator: SceneCoordinatorType) {
     self.taskService = taskService
     self.sceneCoordinator = coordinator
@@ -70,4 +81,20 @@ struct TasksViewModel {
       return self.taskService.update(task: task, title: newTitle).map { _ in }
     }
   }
+    
+    func onCreateTask() -> CocoaAction {
+        return CocoaAction { _ in
+            return self.taskService
+                .createTask(title: "")
+                .flatMap { task -> Observable<Void> in
+                    let editViewModel = EditTaskViewModel(task: task,
+                                                          coordinator: self.sceneCoordinator,
+                                                          updateAction: self.onUpdateTitle(task: task),
+                                                          cancelAction: self.onDelete(task: task))
+                    return self.sceneCoordinator
+                        .transition(to: Scene.editTasks(editViewModel), type: .modal)
+                        .asObservable().map { _ in }
+            }
+        }
+    }
 }

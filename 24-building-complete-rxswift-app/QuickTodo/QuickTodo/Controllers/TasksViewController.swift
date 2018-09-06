@@ -49,6 +49,18 @@ class TasksViewController: UIViewController, BindableType {
     viewModel.sectionedItems
         .bind(to: tableView.rx.items(dataSource: dataSource))
         .disposed(by: self.rx.disposeBag)
+    
+    newTaskButton.rx.action = viewModel.onCreateTask()
+    
+    tableView.rx.itemSelected
+        .do(onNext: { [unowned self] (indexPath) in
+            self.tableView.deselectRow(at: indexPath, animated: false)
+        })
+        .map { [unowned self] indexPath in
+            try! self.dataSource.model(at: indexPath) as! TaskItem
+        }
+        .subscribe(viewModel.editAction.inputs)
+        .disposed(by: self.rx.disposeBag)
   }
   
     fileprivate func configureDataSource() {
